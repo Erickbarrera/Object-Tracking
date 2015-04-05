@@ -1,2 +1,1 @@
-More info on PCL Object tracking can be found here:
-https://github.com/PointCloudLibrary/pcl/blob/master/doc/tutorials/content/tracking.rst
+This program tracks multiple different objects in real time using OpenCV's HSF filter.
