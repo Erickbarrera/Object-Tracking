@@ -9,12 +9,12 @@
 #include <opencv2/core/core.hpp>
 
 using namespace cv;
-class Zippo {
+class Trackable_Object {
 
 public:
-    Zippo(void);
-    Zippo(String name);
-    ~Zippo(void);
+    Trackable_Object(void);
+    Trackable_Object(String name);
+    ~Trackable_Object(void);
     int getX();
     void setX(int newX);
     int getY();

@@ -7,7 +7,7 @@
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include "Zippo.h"
+#include "Trackable_Object.h"
 #include "Scale.h"
 #include <sstream>
 #include <string>
@@ -74,7 +74,7 @@ void createTrackbars(){
     createTrackbar( "V_MAX", trackbarWindowName, &V_MAX, V_MAX, on_trackbar );
 
 }
-void drawObject(Vector<Zippo> zips, Mat &frame){
+void drawObject(Vector<Trackable_Object> zips, Mat &frame){
     //added 'if' and 'else' statements to prevent
     //memory errors from writing off the screen (ie. (-25,-25) is not within the window
     for (int i = 0; i < zips.size(); ++i) {
@@ -110,7 +110,7 @@ void morphOps(Mat &thresh){
 }
 void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed){
 
-    Vector<Zippo> zips;
+    Vector<Trackable_Object> zips;
 
     Mat temp;
     threshold.copyTo(temp);
@@ -136,7 +136,7 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed){
                 //we only want the object with the largest area so we safe a reference area each
                 //iteration and compare it to the area in the next iteration.
                 if(area>MIN_OBJECT_AREA && area<MAX_OBJECT_AREA && area>refArea){
-                    Zippo zip;
+                    Trackable_Object zip;
                     zip.setX( moment.m10/area);
                     zip.setY( moment.m01/area);
                     zips.push_back(zip);
@@ -155,9 +155,9 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed){
         }else putText(cameraFeed,"TOO MUCH NOISE! ADJUST FILTER",Point(0,50),1,2,Scalar(0,0,255),2);
     }
 }
-void trackFilteredObject(Zippo zip_param, Mat threshold, Mat &cameraFeed){
+void trackFilteredObject(Trackable_Object zip_param, Mat threshold, Mat &cameraFeed){
 
-    Vector<Zippo> zips;
+    Vector<Trackable_Object> zips;
 
     Mat temp;
     threshold.copyTo(temp);
@@ -183,7 +183,7 @@ void trackFilteredObject(Zippo zip_param, Mat threshold, Mat &cameraFeed){
                 //we only want the object with the largest area so we safe a reference area each
                 //iteration and compare it to the area in the next iteration.
                 if(area>MIN_OBJECT_AREA && area<MAX_OBJECT_AREA && area>refArea){
-                    Zippo zip;
+                    Trackable_Object zip;
                     zip.setX( moment.m10/area);
                     zip.setY( moment.m01/area);
                     zip.setType(zip_param.getType());
@@ -281,7 +281,7 @@ void *lookforobject(void *ofd_ptr){
             imshow(windowName2, threshold);
             trackFilteredObject(x, y, threshold, cameraFeed);
         } else {
-            Zippo zip("Milk"), remote("remote");
+            Trackable_Object zip("Milk"), remote("remote");
 
             cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
             inRange(HSV,zip.getHSVMin(),zip.getHSVMax(),threshold);
