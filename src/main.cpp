@@ -8,6 +8,9 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include "Zippo.h"
+#include "Scale.h"
+#include <sstream>
+#include <string>
 
 using namespace cv;
 //initial min and max HSV filter values.
@@ -35,9 +38,13 @@ const string trackbarWindowName = "Trackbars";
 //Multithreading stuff
 pthread_t thread1, thread2;
 int ret_thread;
-
+float weight;
+Scale scale;
+string weight_str;
 //Function Declerations
 void* lookforobject(void *ofd_ptr);
+void* StartScale(void *params);
+string Stringify(float number);
 
 
 void on_trackbar( int, void* )
@@ -86,7 +93,7 @@ void drawObject(Vector<Zippo> zips, Mat &frame){
         else line(frame, Point(zips.operator[](i).getX(), zips.operator[](i).getY()), Point(FRAME_WIDTH, zips.operator[](i).getY()), Scalar(0, 255, 0), 2);
         putText(frame, intToString(zips.operator[](i).getX()) + "," + intToString(zips.operator[](i).getY()), Point(zips.operator[](i).getX(), zips.operator[](i).getY() + 30),
                 1, 1, Scalar(0, 255, 0), 2);
-        putText(frame, zips.operator[](i).getType(), Point(zips.operator[](i).getX(), zips.operator[](i).getY() - 30), 1, 2, zips.operator[](i).getColor());
+        putText(frame, zips.operator[](i).getType() + " " + weight_str, Point(zips.operator[](i).getX(), zips.operator[](i).getY() - 30), 1, 2, zips.operator[](i).getColor());
     }
 }
 void morphOps(Mat &thresh){
@@ -209,29 +216,39 @@ struct objectfinder_data{
 
 int main(int argc, char* argv[])
 {
+    int thread_ret;
+    //Start reading from scale
+   // pthread_create(&thread2, NULL, StartScale, NULL);
+
+
 
     if(calibrationMode){
         createTrackbars();
     }
-    int rc;
+
     VideoCapture capture;
     capture.open(0);
     //set height and width of capture frame
-    capture.set(CV_CAP_PROP_FRAME_WIDTH,FRAME_WIDTH);
-    capture.set(CV_CAP_PROP_FRAME_HEIGHT,FRAME_HEIGHT);
+    capture.set(CV_CAP_PROP_FRAME_WIDTH,480); //480 for BBB
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT,640); //640 for BBB
     objectfinder_data ofd;
     ofd.capture_data = capture;
 
     //look for object in new thread
     //to do : spawn scale reading thread
     //to do : spawn xml writer thread
-    rc = pthread_create(&thread1, NULL, lookforobject, &ofd);
+
+    thread_ret = pthread_create(&thread1, NULL, lookforobject, &ofd);
+
     // rc = pthread_create(&thread1, NULL, lookforobject_2, &ofd);
-    std::cout << rc;
+    //Start reading from scale
+   thread_ret = pthread_create(&thread2, NULL, StartScale, NULL);
+    std::cout << thread_ret;
 
     //main loop
     while(1){
-
+        weight = scale.getWeight();
+        weight_str = Stringify(weight);
     }
 
     return 0;
@@ -257,14 +274,14 @@ void *lookforobject(void *ofd_ptr){
             //Settings for - AppleTV Remote
             //inRange(HSV,Scalar(88,34,130),Scalar(122,108,256),threshold);
             //Settings for green zippo
-            inRange(HSV,Scalar(77, 61, 0),Scalar(105,256,256),threshold);
+            inRange(HSV,Scalar(H_MIN,S_MIN,V_MIN),Scalar(H_MAX,S_MAX,V_MAX),threshold);
             //perform morphological operations on thresholded image to eliminate noise
             //and emphasize the filtered object(s)
             morphOps(threshold);
             imshow(windowName2, threshold);
             trackFilteredObject(x, y, threshold, cameraFeed);
         } else {
-            Zippo zip("zippo"), remote("remote");
+            Zippo zip("Milk"), remote("remote");
 
             cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
             inRange(HSV,zip.getHSVMin(),zip.getHSVMax(),threshold);
@@ -284,4 +301,17 @@ void *lookforobject(void *ofd_ptr){
         waitKey(30);
     }
 }
+
+void *StartScale(void *param){
+    scale.Start();
+
+}
+
+string Stringify(float number){
+    std::ostringstream o;
+    if(!(o << number))
+        std::cout << "BadConversion - In function Stringify";
+    return o.str();
+}
+
 

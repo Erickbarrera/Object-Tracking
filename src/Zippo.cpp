@@ -11,14 +11,14 @@ Zippo::Zippo(void){
 
 Zippo::Zippo(String name){
     setType(name);
-    if( name == "zippo"){
-        setHSVMin(Scalar(77, 61, 0));
-        setHSVMax(Scalar(105, 256, 256));
+    if( name == "Milk"){
+        setHSVMin(Scalar(32, 7, 128));
+        setHSVMax(Scalar(180, 256, 226));
         setColor(Scalar(51, 255, 51));
     }
-    if( name == "remote"){
-        setHSVMin(Scalar(88, 34, 130));
-        setHSVMax(Scalar(122,108,256));
+    if( name == "Trapist beer"){
+        setHSVMin(Scalar(0, 0, 0));
+        setHSVMax(Scalar(256,174,103));
         setColor(Scalar(255, 255, 0));
     }
 }
