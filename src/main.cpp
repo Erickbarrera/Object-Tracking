@@ -9,8 +9,8 @@
 #include <opencv/highgui.h>
 #include "Trackable_Object.h"
 #include "Scale.h"
-#include <sstream>
-#include <string>
+#include "XML_Writer.h"
+
 
 using namespace cv;
 //initial min and max HSV filter values.
@@ -41,10 +41,13 @@ int ret_thread;
 float weight;
 Scale scale;
 string weight_str;
+string items[3];
 //Function Declerations
 void* lookforobject(void *ofd_ptr);
 void* StartScale(void *params);
 string Stringify(float number);
+void RecordWeight(Trackable_Object item);
+void Printlist();
 
 
 void on_trackbar( int, void* )
@@ -108,6 +111,7 @@ void morphOps(Mat &thresh){
     dilate(thresh,thresh,dilateElement);
     dilate(thresh,thresh,dilateElement);
 }
+//Use other function
 void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed){
 
     Vector<Trackable_Object> zips;
@@ -142,6 +146,10 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed){
                     zips.push_back(zip);
                     objectFound = true;
                     refArea = area;
+                   // RecordWeight(zip);
+                    XML_Writer xml_writer;
+                    std::cout << "Item: " << zip.getType() << ", Weight: " << weight_str << "\n";
+                   // xml_writer.WriteToFile(zip.getType(), weight_str);
                 }else objectFound = false;
 
 
@@ -150,7 +158,9 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed){
             if(objectFound ==true){
                 putText(cameraFeed,"Tracking Object",Point(0,50),2,1,Scalar(0,255,0),2);
                 //draw object location on screen
+
                 drawObject(zips,cameraFeed);}
+
 
         }else putText(cameraFeed,"TOO MUCH NOISE! ADJUST FILTER",Point(0,50),1,2,Scalar(0,0,255),2);
     }
@@ -158,7 +168,7 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed){
 void trackFilteredObject(Trackable_Object zip_param, Mat threshold, Mat &cameraFeed){
 
     Vector<Trackable_Object> zips;
-
+    Trackable_Object zip;
     Mat temp;
     threshold.copyTo(temp);
     //these two vectors needed for output of findContours
@@ -183,7 +193,7 @@ void trackFilteredObject(Trackable_Object zip_param, Mat threshold, Mat &cameraF
                 //we only want the object with the largest area so we safe a reference area each
                 //iteration and compare it to the area in the next iteration.
                 if(area>MIN_OBJECT_AREA && area<MAX_OBJECT_AREA && area>refArea){
-                    Trackable_Object zip;
+                   // Trackable_Object zip;
                     zip.setX( moment.m10/area);
                     zip.setY( moment.m01/area);
                     zip.setType(zip_param.getType());
@@ -198,6 +208,10 @@ void trackFilteredObject(Trackable_Object zip_param, Mat threshold, Mat &cameraF
             //let user know you found an object
             if(objectFound ==true){
                 putText(cameraFeed,"Tracking Object",Point(0,50),2,1,Scalar(0,255,0),2);
+                //Write item name and weight to file;
+                XML_Writer writer;
+                RecordWeight(zip);
+                writer.WriteToFile(items);
                 //draw object location on screen
                 drawObject(zips,cameraFeed);}
 
@@ -234,21 +248,19 @@ int main(int argc, char* argv[])
     objectfinder_data ofd;
     ofd.capture_data = capture;
 
-    //look for object in new thread
-    //to do : spawn scale reading thread
-    //to do : spawn xml writer thread
 
+    //Start looking for objects
     thread_ret = pthread_create(&thread1, NULL, lookforobject, &ofd);
-
-    // rc = pthread_create(&thread1, NULL, lookforobject_2, &ofd);
+    std::cout << thread_ret;
     //Start reading from scale
-   thread_ret = pthread_create(&thread2, NULL, StartScale, NULL);
+    thread_ret = pthread_create(&thread2, NULL, StartScale, NULL);
     std::cout << thread_ret;
 
     //main loop
     while(1){
         weight = scale.getWeight();
         weight_str = Stringify(weight);
+        //Printlist();
     }
 
     return 0;
@@ -281,7 +293,7 @@ void *lookforobject(void *ofd_ptr){
             imshow(windowName2, threshold);
             trackFilteredObject(x, y, threshold, cameraFeed);
         } else {
-            Trackable_Object zip("Milk"), remote("remote");
+            Trackable_Object zip("Milk"), remote("Gatorade");
 
             cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
             inRange(HSV,zip.getHSVMin(),zip.getHSVMax(),threshold);
@@ -314,4 +326,18 @@ string Stringify(float number){
     return o.str();
 }
 
+void RecordWeight(Trackable_Object item){
+    //in items: 0 = milk, 1 = gatorade, 2 = coke
+    if(weight > 2.0f) {
+        if (item.getType() == "Milk") {
+            items[0] = weight_str;
+        }
+        if (item.getType() == "Gatorade") {
+            items[1] = weight_str;
+        }
+        if (item.getType() == "Beer") {
+            items[2] = weight_str;
+        }
+    }
+}
 

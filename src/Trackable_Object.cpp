@@ -12,13 +12,13 @@ Trackable_Object::Trackable_Object(void){
 Trackable_Object::Trackable_Object(String name){
     setType(name);
     if( name == "Milk"){
-        setHSVMin(Scalar(32, 7, 128));
-        setHSVMax(Scalar(180, 256, 226));
+        setHSVMin(Scalar(22, 0, 153));
+        setHSVMax(Scalar(66, 43, 246));
         setColor(Scalar(51, 255, 51));
     }
-    if( name == "Trapist beer"){
-        setHSVMin(Scalar(0, 0, 0));
-        setHSVMax(Scalar(256,174,103));
+    if( name == "Gatorade"){
+        setHSVMin(Scalar(50, 43, 92));
+        setHSVMax(Scalar(126,163,220));
         setColor(Scalar(255, 255, 0));
     }
 }

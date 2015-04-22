@@ -4,6 +4,7 @@
 
 #include <pthread.h>
 #include "Scale.h"
+#include "Trackable_Object.h"
 
 
 Scale::Scale() {
@@ -33,17 +34,20 @@ void  *Scale::Start(){
         if((raw_old - 5) < raw_new && raw_new < (raw_old + 5)){
             printf("Weight is unchanged.\nInitial Value: %.2f\n", init_val);
             printf("Raw Value: %.2f\nCurrent Weight: %.2f lbs\n\n", raw_new, (raw_new - init_val)*slope);
+            currentWeight = (raw_new - init_val)*slope;
             sleep(1);
             raw_new = ReadADC();
-            printf("Current Weight: %.2f", currentWeight);
+
+
         }
         else{
             raw_old = raw_new = ReadADC();
             printf("Weight has changed.\nInitial Value: %.2f\nRaw Value:    %.2f\n", init_val, raw_new);
             printf("Actual Weight:  %.2f lbs\n\n", (raw_new - init_val)*slope/**volt_cons*/);
             //printf("Actual Weight:        %.2f\n", herp(raw_new, init_val);
+            currentWeight = (raw_new - init_val)*slope;
             sleep(1);
-            printf("Current Weight: %.2f", currentWeight);
+
 
         }
 
